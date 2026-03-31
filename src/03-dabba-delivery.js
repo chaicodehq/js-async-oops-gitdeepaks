@@ -76,30 +76,83 @@
  */
 export class DabbaService {
   constructor(serviceName, area) {
-    // Your code here
+    this.serviceName = serviceName;
+    this.area = area;
+    this.customers = [];
+    this._nextId = 1;
   }
 
   addCustomer(name, address, mealPreference) {
-    // Your code here
+    const validPrefreence = ["veg", "nonveg", "jain"];
+
+    if (!validPrefreence.includes(mealPreference)) return null;
+
+    const alreadyExists = this.customers.find((c) => c.name === name);
+    if (alreadyExists) return null;
+
+    const customer = {
+      id: this._nextId++,
+      name,
+      address,
+      mealPreference,
+      active: true,
+      delivered: false,
+    };
+
+    this.customers.push(customer);
+    return customer;
   }
 
   removeCustomer(name) {
-    // Your code here
+    const customer = this.customers.find((c) => c.name === name);
+    if (!customer || !customer.active) return false;
+    customer.active = false;
+    return true;
   }
 
   createDeliveryBatch() {
-    // Your code here
+    const activeCustomers = this.customers.filter((c) => c.active);
+    if (activeCustomers.length === 0) return [];
+
+    activeCustomers.forEach((c) => (c.delivered = false));
+    return activeCustomers.map((c) => ({
+      customerId: c.id,
+      name: c.name,
+      address: c.address,
+      mealPreference: c.mealPreference,
+      batchTime: new Date().toISOString(),
+    }));
   }
 
   markDelivered(customerId) {
-    // Your code here
+    const customer = this.customers.find(
+      (c) => c.id === customerId && c.active,
+    );
+    if (!customer) return false;
+
+    customer.delivered = true;
+    return true;
   }
 
   getDailyReport() {
-    // Your code here
+    const activeCustomers = this.customers.filter((c) => c.active);
+
+    const report = {
+      totalCustomers: activeCustomers.length,
+      delivered: activeCustomers.filter((c) => c.delivered === true).length,
+      pending: activeCustomers.filter((c) => c.delivered === false).length,
+      mealBreakdown: {
+        veg: activeCustomers.filter((c) => c.mealPreference === "veg").length,
+        nonveg: activeCustomers.filter((c) => c.mealPreference === "nonveg")
+          .length,
+        jain: activeCustomers.filter((c) => c.mealPreference === "jain").length,
+      },
+    };
+
+    return report;
   }
 
   getCustomer(name) {
-    // Your code here
+    return this.customers.find((c) => c.name === name) ?? null;
   }
 }
